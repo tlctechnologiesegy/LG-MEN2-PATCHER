@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LG-UNIT-PATCHER
+Comment=LG Unit Patcher Tool
+Exec=/usr/bin/python3 /home/tlcadmin/LG-MEN2-PATCHER/men2_patcher_gui.py
+Icon=/home/tlcadmin/LG-MEN2-PATCHER/app_logo.png
+Terminal=false
+Categories=Utility;Development;
