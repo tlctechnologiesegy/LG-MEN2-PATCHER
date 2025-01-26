@@ -1,0 +1,11 @@
+struct dataToBeChecksumed_struct {
+   unsigned char x[31680];
+}  dataToBeChecksumed <bgcolor=cGreen>;
+
+struct dataNoChecksumed_struct {
+   unsigned char x[64];
+}  dataNoChecksumed <bgcolor=cWhite>;
+
+struct Checksum_struct {
+   unsigned char x[1024];
+}  Checksum <bgcolor=cRed>;

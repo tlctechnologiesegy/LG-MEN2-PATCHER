@@ -1,0 +1,796 @@
+RunTemplate( "1st_MEN2_LG_patch.bt", true );
+int checksumTemporal=0;
+uint16 actualBlockChecksum=0;
+int error=0;
+
+//string desiredDatetime = "2017-09-11 06:23:48"; // yyyy-MM-dd hh:mm:ss or "auto"
+string desiredDatetime = "auto"; // yyyy-MM-dd hh:mm:ss or "auto"
+//string desiredVIN = "TMBJJ7NE5H0171997";
+
+string desiredVIN;
+
+unsigned char desiredVCRN[5] = {0x00, 0x00, 0x00, 0x00, 0x00}; //if it is, then 0x00, 0x00, 0x00, 0x00, 0x00
+time_t desiredDatetimeSinceEpoch=0;
+unsigned int epochBuffer;
+int i=0;
+int Fec1_activated;
+int Fec2_activated;
+int Fec3_activated;
+int Fec4_activated;
+
+
+void readData(){
+    
+    Printf("\nInformation read from eeprom backup:\n");
+    Printf("Backup file size: %i byte\n", FileSize());
+    if (FileSize() != 32768){
+        Printf("Eeprom backup file size is incorrect!\n");
+        Exit(0);
+    }        
+    Printf("FAZIT Identification: %s", fazit.x);
+    Printf("\nInstalled Software train Version: %s", version.x);
+ 
+    Printf("\nFEC1: \n");
+    Printf(" magic header: ");
+    if ((FEC1_1.magic_bytes[0]==0x11)&&(FEC1_1.magic_bytes[1]==0x02)){
+        Printf("present\n");
+        Printf(" FEC: %02X%02X%02X%02X", FEC1_1.FEC[0], FEC1_1.FEC[1], FEC1_1.FEC[2], FEC1_1.FEC[3]);       
+        switch( FEC1_1.FEC[2] ) 
+        {
+            case 1 : Printf(" - Car data monitoring\n"); break;
+            case 3 : Printf(" - Mirror Link\n"); break;
+            case 8 : Printf(" - Apple CarPlay\n"); break;
+            case 9 : Printf(" - Google Automotive Link\n"); break;
+            default : Printf("\n");
+        }
+        if ((FEC1_1.always03==0x03)){
+            Printf(" always03: present\n");
+        }
+        else {
+            Printf(" always03: not present\n");
+        }
+        Printf(" VCRN: %02X%02X%02X%02X%02X\n", FEC1_1.VCRN[0], FEC1_1.VCRN[1], FEC1_1.VCRN[2], FEC1_1.VCRN[3], FEC1_1.VCRN[4]);
+        if (FEC1_1.VIN == "                 ")
+        {
+            Printf(" VIN: not provided\n");
+        }
+        else
+        {
+            Printf(" VIN: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c \n", FEC1_1.VIN[0], FEC1_1.VIN[1], FEC1_1.VIN[2], FEC1_1.VIN[3], FEC1_1.VIN[4], FEC1_1.VIN[5], FEC1_1.VIN[6], FEC1_1.VIN[7], FEC1_1.VIN[8], FEC1_1.VIN[9], FEC1_1.VIN[10], FEC1_1.VIN[11], FEC1_1.VIN[12], FEC1_1.VIN[13], FEC1_1.VIN[14], FEC1_1.VIN[15], FEC1_1.VIN[16]);
+        }        
+        if ((FEC1_1.always00==0x00)){
+            Printf(" always00: present\n");
+        }
+        else {
+            Printf(" always00: not present\n");
+        }
+        //epochBuffer=ConvertBytesToUInt (FEC1_1.epoch);
+        //ConvertDataToBytes(epochBuffer, FEC1_1.epoch);
+        epochBuffer=((FEC1_1.epoch[0] * 16777216) + (FEC1_1.epoch[1] * 65536) | (FEC1_1.epoch[2] * 256) | FEC1_1.epoch[3]);
+        Printf(" epoch: %02X (%s)\n", epochBuffer, TimeTToString(epochBuffer, "yyyy-MM-dd hh:mm:ss"));
+        if ((FEC1_1.always9byteOx00[0]==0x00)&&(FEC1_1.always9byteOx00[1]==0x00)&&(FEC1_1.always9byteOx00[2]==0x00)&& (FEC1_1.always9byteOx00[3]==0x00)&&(FEC1_1.always9byteOx00[4]==0x00)&&(FEC1_1.always9byteOx00[5]==0x00)&& (FEC1_1.always9byteOx00[6]==0x00)&&(FEC1_1.always9byteOx00[7]==0x00)&&(FEC1_1.always9byteOx00[8]==0x00)){
+            Printf(" always 9 byte of 00: present\n");
+        }
+        else {
+            Printf(" always 9 byte of 00: not present\n");
+        }
+        Printf("Signature:\n");
+        for (i = 0; i < 16; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 16; i < 32; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 32; i < 48; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 48; i < 64; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 64; i < 80; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 80; i < 96; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 96; i < 112; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 112; i < 128; i++){
+            Printf("%02X", FEC1_1.signature[i]);
+        }
+        Printf("\n");
+    }
+    else {
+        Printf("not present\n");
+    }
+    
+    Printf("\nFEC2: \n");
+    Printf(" magic header: ");
+    if ((FEC2_1.magic_bytes[0]==0x11)&&(FEC2_1.magic_bytes[1]==0x02)){
+        Printf("present\n");
+        Printf(" FEC: %02X%02X%02X%02X", FEC2_1.FEC[0], FEC2_1.FEC[1], FEC2_1.FEC[2], FEC2_1.FEC[3]);
+        
+        switch( FEC2_1.FEC[2] ) 
+        {
+            case 1 : Printf(" - Car data monitoring\n"); break;
+            case 3 : Printf(" - Mirror Link\n"); break;
+            case 8 : Printf(" - Apple CarPlay\n"); break;
+            case 9 : Printf(" - Google Automotive Link\n"); break;
+            default : Printf("\n");
+        } 
+
+        if ((FEC2_1.always03==0x03)){
+            Printf(" always03: present\n");
+        }
+        else {
+            Printf(" always03: not present\n");
+        }
+        Printf(" VCRN: %02X%02X%02X%02X%02X\n", FEC2_1.VCRN[0], FEC2_1.VCRN[1], FEC2_1.VCRN[2], FEC2_1.VCRN[3], FEC2_1.VCRN[4]);
+        if (FEC2_1.VIN == "                 ")
+        {
+            Printf(" VIN: not provided\n");
+        }
+        else
+        {
+            Printf(" VIN: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c \n", FEC2_1.VIN[0], FEC2_1.VIN[1], FEC2_1.VIN[2], FEC2_1.VIN[3], FEC2_1.VIN[4], FEC2_1.VIN[5], FEC2_1.VIN[6], FEC2_1.VIN[7], FEC2_1.VIN[8], FEC2_1.VIN[9], FEC2_1.VIN[10], FEC2_1.VIN[11], FEC2_1.VIN[12], FEC2_1.VIN[13], FEC2_1.VIN[14], FEC2_1.VIN[15], FEC2_1.VIN[16]);
+        }
+        if ((FEC2_1.always00==0x00)){
+            Printf(" always00: present\n");
+        }
+        else {
+            Printf(" always00: not present\n");
+        }
+        epochBuffer=((FEC2_1.epoch[0] * 16777216) + (FEC2_1.epoch[1] * 65536) | (FEC2_1.epoch[2] * 256) | FEC2_1.epoch[3]);
+        Printf(" epoch: %02X (%s)\n", epochBuffer, TimeTToString(epochBuffer, "yyyy-MM-dd hh:mm:ss")); 
+       //Printf(" epoch: %u (%s)\n", FEC2_1.epoch, TimeTToString(FEC2_1.epoch, "yyyy-MM-dd hh:mm:ss"));
+        if ((FEC2_1.always9byteOx00[0]==0x00)&&(FEC2_1.always9byteOx00[1]==0x00)&&(FEC2_1.always9byteOx00[2]==0x00)&& (FEC2_1.always9byteOx00[3]==0x00)&&(FEC2_1.always9byteOx00[4]==0x00)&&(FEC2_1.always9byteOx00[5]==0x00)&& (FEC2_1.always9byteOx00[6]==0x00)&&(FEC2_1.always9byteOx00[7]==0x00)&&(FEC2_1.always9byteOx00[8]==0x00)){
+            Printf(" always 9 byte of 00: present\n");
+        }
+        else {
+            Printf(" always 9 byte of 00: not present\n");
+        }
+        Printf("Signature:\n");
+        for (i = 0; i < 16; i++){
+            Printf("%02X", FEC2_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 16; i < 32; i++){
+            Printf("%02X", FEC2_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 32; i < 48; i++){
+            Printf("%02X", FEC2_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 48; i < 64; i++){
+            Printf("%02X", FEC2_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 0; i < 16; i++){
+            Printf("%02X", FEC2_1_sign2.x[i]);
+        }
+        Printf("\n");
+        for (i = 16; i < 32; i++){
+            Printf("%02X", FEC2_1_sign2.x[i]);
+        }
+        Printf("\n");
+        for (i = 32; i < 48; i++){
+            Printf("%02X", FEC2_1_sign2.x[i]);
+        }
+        Printf("\n");
+        for (i = 48; i < 64; i++){
+            Printf("%02X", FEC2_1_sign2.x[i]);
+        }
+        Printf("\n");
+    }
+    else {
+        Printf("not present\n");
+    }
+
+    Printf("\nFEC3: \n");
+    Printf(" magic header: ");
+    if ((FEC3_1.magic_bytes[0]==0x11)&&(FEC3_1.magic_bytes[1]==0x02)){
+        Printf("present\n");
+        Printf(" FEC: %02X%02X%02X%02X", FEC3_1.FEC[0], FEC3_1.FEC[1], FEC3_1.FEC[2], FEC3_1.FEC[3]);
+        switch( FEC3_1.FEC[2] ) 
+        {
+            case 1 : Printf(" - Car data monitoring\n"); break;
+            case 3 : Printf(" - Mirror Link\n"); break;
+            case 8 : Printf(" - Apple CarPlay\n"); break;
+            case 9 : Printf(" - Google Automotive Link\n"); break;
+            default : Printf("\n");
+        }         
+        if ((FEC3_1.always03==0x03)){
+            Printf(" always03: present\n");
+        }
+        else {
+            Printf(" always03: not present\n");
+        }
+        Printf(" VCRN: %02X%02X%02X%02X%02X\n", FEC3_1.VCRN[0], FEC3_1.VCRN[1], FEC3_1.VCRN[2], FEC3_1.VCRN[3], FEC3_1.VCRN[4]);
+        if (FEC3_1.VIN == "                 ")
+        {
+            Printf(" VIN: not provided\n");
+        }
+        else
+        {
+            Printf(" VIN: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c \n", FEC3_1.VIN[0], FEC3_1.VIN[1], FEC3_1.VIN[2], FEC3_1.VIN[3], FEC3_1.VIN[4], FEC3_1.VIN[5], FEC3_1.VIN[6], FEC3_1.VIN[7], FEC3_1.VIN[8], FEC3_1.VIN[9], FEC3_1.VIN[10], FEC3_1.VIN[11], FEC3_1.VIN[12], FEC3_1.VIN[13], FEC3_1.VIN[14], FEC3_1.VIN[15], FEC3_1.VIN[16]);
+        }
+        if ((FEC3_1.always00==0x00)){
+            Printf(" always00: present\n");
+        }
+        else {
+            Printf(" always00: not present\n");
+        }
+        //Printf(" epoch: %u (%s)\n", FEC3_1.epoch, TimeTToString(FEC3_1.epoch, "yyyy-MM-dd hh:mm:ss"));
+        epochBuffer=((FEC3_1.epoch[0] * 16777216) + (FEC3_1.epoch[1] * 65536) | (FEC3_1.epoch[2] * 256) | FEC3_1.epoch[3]);
+        Printf(" epoch: %02X (%s)\n", epochBuffer, TimeTToString(epochBuffer, "yyyy-MM-dd hh:mm:ss"));        
+        if ((FEC3_1.always9byteOx00[0]==0x00)&&(FEC3_1.always9byteOx00[1]==0x00)&&(FEC3_1.always9byteOx00[2]==0x00)&& (FEC3_1.always9byteOx00[3]==0x00)&&(FEC3_1.always9byteOx00[4]==0x00)&&(FEC3_1.always9byteOx00[5]==0x00)&& (FEC3_1.always9byteOx00[6]==0x00)&&(FEC3_1.always9byteOx00[7]==0x00)&&(FEC3_1.always9byteOx00[8]==0x00)){
+            Printf(" always 9 byte of 00: present\n");
+        }
+        else {
+            Printf(" always 9 byte of 00: not present\n");
+        }
+        Printf("Signature:\n");
+        for (i = 0; i < 16; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 16; i < 32; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 32; i < 48; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 48; i < 64; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 64; i < 80; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 80; i < 96; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 96; i < 112; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 112; i < 128; i++){
+            Printf("%02X", FEC3_1.signature[i]);
+        }
+        Printf("\n");
+    }
+    else {
+        Printf("not present\n");
+    }
+
+    Printf("\nFEC4: \n");
+    Printf(" magic header: ");
+    if ((FEC4_1.magic_bytes[0]==0x11)&&(FEC4_1.magic_bytes[1]==0x02)){
+        Printf("present\n");
+        Printf(" FEC: %02X%02X%02X%02X", FEC4_1.FEC[0], FEC4_1.FEC[1], FEC4_1.FEC[2], FEC4_1.FEC[3]);
+        switch( FEC4_1.FEC[2] ) 
+        {
+            case 1 : Printf(" - Car data monitoring\n"); break;
+            case 3 : Printf(" - Mirror Link\n"); break;
+            case 8 : Printf(" - Apple CarPlay\n"); break;
+            case 9 : Printf(" - Google Automotive Link\n"); break;
+            default : Printf("\n");
+        }                 
+        if ((FEC4_1.always03==0x03)){
+            Printf(" always03: present\n");
+        }
+        else {
+            Printf(" always03: not present\n");
+        }
+        Printf(" VCRN: %02X%02X%02X%02X%02X\n", FEC4_1.VCRN[0], FEC4_1.VCRN[1], FEC4_1.VCRN[2], FEC4_1.VCRN[3], FEC4_1.VCRN[4]);
+        if (FEC4_1.VIN == "                 ")
+        {
+            Printf(" VIN: not provided\n");
+        }
+        else
+        {
+            Printf(" VIN: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c \n", FEC4_1.VIN[0], FEC4_1.VIN[1], FEC4_1.VIN[2], FEC4_1.VIN[3], FEC4_1.VIN[4], FEC4_1.VIN[5], FEC4_1.VIN[6], FEC4_1.VIN[7], FEC4_1.VIN[8], FEC4_1.VIN[9], FEC4_1.VIN[10], FEC4_1.VIN[11], FEC4_1.VIN[12], FEC4_1.VIN[13], FEC4_1.VIN[14], FEC4_1.VIN[15], FEC4_1.VIN[16]);
+        }
+        if ((FEC4_1.always00==0x00)){
+            Printf(" always00: present\n");
+        }
+        else {
+            Printf(" always00: not present\n");
+        }
+        //Printf(" epoch: %u (%s)\n", FEC4_1.epoch, TimeTToString(FEC4_1.epoch, "yyyy-MM-dd hh:mm:ss"));
+        epochBuffer=((FEC4_1.epoch[0] * 16777216) + (FEC4_1.epoch[1] * 65536) | (FEC4_1.epoch[2] * 256) | FEC4_1.epoch[3]);
+        Printf(" epoch: %02X (%s)\n", epochBuffer, TimeTToString(epochBuffer, "yyyy-MM-dd hh:mm:ss"));
+        if ((FEC4_1.always9byteOx00[0]==0x00)&&(FEC4_1.always9byteOx00[1]==0x00)&&(FEC4_1.always9byteOx00[2]==0x00)&& (FEC4_1.always9byteOx00[3]==0x00)&&(FEC4_1.always9byteOx00[4]==0x00)&&(FEC4_1.always9byteOx00[5]==0x00)&& (FEC4_1.always9byteOx00[6]==0x00)&&(FEC4_1.always9byteOx00[7]==0x00)&&(FEC4_1.always9byteOx00[8]==0x00)){
+            Printf(" always 9 byte of 00: present\n");
+        }
+        else {
+            Printf(" always 9 byte of 00: not present\n");
+        }
+        Printf("Signature:\n");
+        for (i = 0; i < 16; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 16; i < 32; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 32; i < 48; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 48; i < 64; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 64; i < 80; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 80; i < 96; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 96; i < 112; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+        for (i = 112; i < 128; i++){
+            Printf("%02X", FEC4_1.signature[i]);
+        }
+        Printf("\n");
+    }
+    else {
+        Printf("not present\n");
+    }
+    
+    Printf("\nFEC status:\n");
+
+    Printf(" Fec1 %02X%02X%02X%02X: (%02X%02X) ", FECstatus_fill1_1.x[6], FECstatus_fill1_1.x[7], FECstatus_fill1_1.x[8], FECstatus_fill1_1.x[9], FECstatus_val1_1.x[0], FECstatus_val1_1.x[1]);
+    if ((FECstatus_val1_1.x[0]==0xFF)&&(FECstatus_val1_1.x[1]==0x01) || (FECstatus_val1_1.x[0]==0xFF)&&(FECstatus_val1_1.x[1]==0x00))
+    {
+        if (FECstatus_val1_1.x[1]==0x00)
+        {
+            Printf("Mirror Link service officially activated\n");
+        }
+        else 
+        {
+            Printf("Mirror Link service patched\n");
+        }
+        Fec1_activated = 1;
+    }
+    else
+    {
+        Fec1_activated = 0;
+        Printf("Mirror Link service is not activated\n");
+    }
+
+    Printf(" Fec2 %02X%02X%02X%02X: (%02X%02X) ",  FECstatus_fill2_1.x[6], FECstatus_fill2_1.x[7], FECstatus_fill2_1.x[8], FECstatus_fill2_1.x[9], FECstatus_val2_1.x[0], FECstatus_val2_1.x[1]);
+    if ((FECstatus_val2_1.x[0]==0xFF)&&(FECstatus_val2_1.x[1]==0x01) || (FECstatus_val2_1.x[0]==0xFF)&&(FECstatus_val2_1.x[1]==0x00))
+    {
+        if (FECstatus_val2_1.x[1]==0x00)
+        {
+            Printf("Apple CarPlay service officially activated\n");
+        }
+        else 
+        {
+            Printf("Apple CarPlay service patched\n");
+        }        
+        Fec2_activated = 1;
+    }
+    else
+    {
+        Fec2_activated = 0;
+        Printf("Apple CarPlay service is not activated\n");
+    }
+
+    Printf(" Fec3 %02X%02X%02X%02X: (%02X%02X) ", FECstatus_fill3_1.x[6], FECstatus_fill3_1.x[7], FECstatus_fill3_1.x[8], FECstatus_fill3_1.x[9], FECstatus_val3_1.x[0], FECstatus_val3_1.x[1]);
+    if ((FECstatus_val3_1.x[0]==0xFF)&&(FECstatus_val3_1.x[1]==0x01) || (FECstatus_val3_1.x[0]==0xFF)&&(FECstatus_val3_1.x[1]==0x00))
+    {
+        if (FECstatus_val3_1.x[1]==0x00)
+        {
+            Printf("Google Automotive Link service officially activated\n");
+        }
+        else 
+        {
+            Printf("Google Automotive Link service patched\n");
+        }
+        Fec3_activated = 1;
+    }
+    else
+    {
+        Fec3_activated = 0;
+        Printf("Google Automotive Link service is not activated\n");
+    }
+
+    Printf(" Fec4 %02X%02X%02X%02X: (%02X%02X) ",  FECstatus_fill4_1.x[6], FECstatus_fill4_1.x[7], FECstatus_fill4_1.x[8], FECstatus_fill4_1.x[9], FECstatus_val4_1.x[0], FECstatus_val4_1.x[1]);
+    if ((FECstatus_val4_1.x[0]==0xFF)&&(FECstatus_val4_1.x[1]==0x01) || (FECstatus_val4_1.x[0]==0xFF)&&(FECstatus_val4_1.x[1]==0x00))
+    {
+        if (FECstatus_val4_1.x[1]==0x00)
+        {
+            Printf("Car data monitoring service officially activated\n");
+        }
+        else 
+        {
+            Printf("Car data monitoring service patched\n");
+        }
+        Fec4_activated = 1;
+    }
+    else
+    {
+        Fec4_activated = 0;
+        Printf("Car data monitoring service is not activated\n");
+    }
+}
+
+readData();
+
+if (desiredDatetime[0]=='a'){
+    desiredDatetime = GetCurrentDateTime("yyyy-MM-dd hh:mm:ss");
+
+}
+StringToTimeT(desiredDatetime, desiredDatetimeSinceEpoch, "yyyy-MM-dd hh:mm:ss");
+
+void patch_everything(){
+
+    while( Strlen(desiredVIN) != 17)
+    {
+        desiredVIN = InputString("Enter VIN (17 characters long)", "Vehicle Identification Number:", "                 ");
+        if (Strlen(desiredVIN) != 17)
+        {
+            Printf("17 characters are required!\n");
+        }
+    }
+
+    Printf("\nGot these parameters:\n Datetime: hex - %02X, dec - %i, (%s)\n", desiredDatetimeSinceEpoch, desiredDatetimeSinceEpoch, desiredDatetime);
+    //Printf("%i\n", desiredDatetimeSinceEpoch);
+    if (desiredVIN == "                 ")
+    {
+        Printf(" VIN: not provided\n");
+    }
+    else
+    {
+        Printf(" VIN: \"%s\"\n", desiredVIN);
+    }
+    if ((desiredVCRN[0]==0x00)&&(desiredVCRN[1]==0x00)&&(desiredVCRN[2]==0x00)&&(desiredVCRN[3]==0x00)&&(desiredVCRN[4]==0x00)){
+        desiredVCRN[0] = realVCRN_1.x[0];
+        desiredVCRN[1] = realVCRN_1.x[1];
+        desiredVCRN[2] = realVCRN_1.x[2];
+        desiredVCRN[3] = realVCRN_1.x[3];
+        desiredVCRN[4] = realVCRN_1.x[4];
+    }
+    Printf(" VCRN: %02X.%02X.%02X.%02X.%02X\n\n", desiredVCRN[0], desiredVCRN[1], desiredVCRN[2], desiredVCRN[3], desiredVCRN[4]);
+    Printf(" Patching...\n");
+
+    FEC1_1.magic_bytes[0]=0x11; FEC1_1.magic_bytes[1]=0x02;
+    FEC2_1.magic_bytes[0]=0x11; FEC2_1.magic_bytes[1]=0x02;
+    FEC3_1.magic_bytes[0]=0x11; FEC3_1.magic_bytes[1]=0x02;
+    FEC4_1.magic_bytes[0]=0x11; FEC4_1.magic_bytes[1]=0x02;
+    FEC1_2.magic_bytes[0]=0x11; FEC1_2.magic_bytes[1]=0x02;
+    FEC2_2.magic_bytes[0]=0x11; FEC2_2.magic_bytes[1]=0x02;
+    FEC3_2.magic_bytes[0]=0x11; FEC3_2.magic_bytes[1]=0x02;
+    FEC4_2.magic_bytes[0]=0x11; FEC4_2.magic_bytes[1]=0x02;
+    FEC1_3.magic_bytes[0]=0x11; FEC1_3.magic_bytes[1]=0x02;
+    FEC2_3.magic_bytes[0]=0x11; FEC2_3.magic_bytes[1]=0x02;
+    FEC3_3.magic_bytes[0]=0x11; FEC3_3.magic_bytes[1]=0x02;
+    FEC4_3.magic_bytes[0]=0x11; FEC4_3.magic_bytes[1]=0x02;
+
+    FEC1_1.FEC[0]=0x00; FEC1_1.FEC[1]=0x06; FEC1_1.FEC[2]=0x09; FEC1_1.FEC[3]=0x00;
+    FEC2_1.FEC[0]=0x00; FEC2_1.FEC[1]=0x06; FEC2_1.FEC[2]=0x01; FEC2_1.FEC[3]=0x00;
+    FEC3_1.FEC[0]=0x00; FEC3_1.FEC[1]=0x06; FEC3_1.FEC[2]=0x08; FEC3_1.FEC[3]=0x00;
+    FEC4_1.FEC[0]=0x00; FEC4_1.FEC[1]=0x06; FEC4_1.FEC[2]=0x03; FEC4_1.FEC[3]=0x00;
+    FEC1_2.FEC[0]=0x00; FEC1_2.FEC[1]=0x06; FEC1_2.FEC[2]=0x09; FEC1_2.FEC[3]=0x00;
+    FEC2_2.FEC[0]=0x00; FEC2_2.FEC[1]=0x06; FEC2_2.FEC[2]=0x01; FEC2_2.FEC[3]=0x00;
+    FEC3_2.FEC[0]=0x00; FEC3_2.FEC[1]=0x06; FEC3_2.FEC[2]=0x08; FEC3_2.FEC[3]=0x00;
+    FEC4_2.FEC[0]=0x00; FEC4_2.FEC[1]=0x06; FEC4_2.FEC[2]=0x03; FEC4_2.FEC[3]=0x00;
+    FEC1_3.FEC[0]=0x00; FEC1_3.FEC[1]=0x06; FEC1_3.FEC[2]=0x09; FEC1_3.FEC[3]=0x00;
+    FEC2_3.FEC[0]=0x00; FEC2_3.FEC[1]=0x06; FEC2_3.FEC[2]=0x01; FEC2_3.FEC[3]=0x00;
+    FEC3_3.FEC[0]=0x00; FEC3_3.FEC[1]=0x06; FEC3_3.FEC[2]=0x08; FEC3_3.FEC[3]=0x00;
+    FEC4_3.FEC[0]=0x00; FEC4_3.FEC[1]=0x06; FEC4_3.FEC[2]=0x03; FEC4_3.FEC[3]=0x00;
+
+    FEC1_1.always03=0x03;
+    FEC2_1.always03=0x03;
+    FEC3_1.always03=0x03;
+    FEC4_1.always03=0x03;
+    FEC1_2.always03=0x03;
+    FEC2_2.always03=0x03;
+    FEC3_2.always03=0x03;
+    FEC4_2.always03=0x03;
+    FEC1_3.always03=0x03;
+    FEC2_3.always03=0x03;
+    FEC3_3.always03=0x03;
+    FEC4_3.always03=0x03;
+
+    for (i=0;i<5;i++){
+        FEC1_1.VCRN[i]=desiredVCRN[i];
+        FEC2_1.VCRN[i]=desiredVCRN[i];
+        FEC3_1.VCRN[i]=desiredVCRN[i];
+        FEC4_1.VCRN[i]=desiredVCRN[i];
+        FEC1_2.VCRN[i]=desiredVCRN[i];
+        FEC2_2.VCRN[i]=desiredVCRN[i];
+        FEC3_2.VCRN[i]=desiredVCRN[i];
+        FEC4_2.VCRN[i]=desiredVCRN[i];
+        FEC1_3.VCRN[i]=desiredVCRN[i];
+        FEC2_3.VCRN[i]=desiredVCRN[i];
+        FEC3_3.VCRN[i]=desiredVCRN[i];
+        FEC4_3.VCRN[i]=desiredVCRN[i];
+     }
+
+    for (i=0;i<17;i++){
+        FEC1_1.VIN[i]=desiredVIN[i];
+        FEC2_1.VIN[i]=desiredVIN[i];
+        FEC3_1.VIN[i]=desiredVIN[i];
+        FEC4_1.VIN[i]=desiredVIN[i];
+        FEC1_2.VIN[i]=desiredVIN[i];
+        FEC2_2.VIN[i]=desiredVIN[i];
+        FEC3_2.VIN[i]=desiredVIN[i];
+        FEC4_2.VIN[i]=desiredVIN[i];
+        FEC1_3.VIN[i]=desiredVIN[i];
+        FEC2_3.VIN[i]=desiredVIN[i];
+        FEC3_3.VIN[i]=desiredVIN[i];
+        FEC4_3.VIN[i]=desiredVIN[i];
+    }
+
+    FEC1_1.always00=0x00;
+    FEC2_1.always00=0x00;
+    FEC3_1.always00=0x00;
+    FEC4_1.always00=0x00;
+    FEC1_2.always00=0x00;
+    FEC2_2.always00=0x00;
+    FEC3_2.always00=0x00;
+    FEC4_2.always00=0x00;
+    FEC1_3.always00=0x00;
+    FEC2_3.always00=0x00;
+    FEC3_3.always00=0x00;
+    FEC4_3.always00=0x00;
+        
+    FEC1_1.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC1_1.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC1_1.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC1_1.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC2_1.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC2_1.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC2_1.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC2_1.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC3_1.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC3_1.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC3_1.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC3_1.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC4_1.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC4_1.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC4_1.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC4_1.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC1_2.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC1_2.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC1_2.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC1_2.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC2_2.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC2_2.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC2_2.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC2_2.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC3_2.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC3_2.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC3_2.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC3_2.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC4_2.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC4_2.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC4_2.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC4_2.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC1_3.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC1_3.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC1_3.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC1_3.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC2_3.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC2_3.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC2_3.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC2_3.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC3_3.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC3_3.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC3_3.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC3_3.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FEC4_3.epoch[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FEC4_3.epoch[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FEC4_3.epoch[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FEC4_3.epoch[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+
+    for (i=0;i<9;i++){
+        FEC1_1.always9byteOx00[i]=0;
+        FEC2_1.always9byteOx00[i]=0;
+        FEC3_1.always9byteOx00[i]=0;
+        FEC4_1.always9byteOx00[i]=0;
+        FEC1_2.always9byteOx00[i]=0;
+        FEC2_2.always9byteOx00[i]=0;
+        FEC3_2.always9byteOx00[i]=0;
+        FEC4_2.always9byteOx00[i]=0;
+        FEC1_3.always9byteOx00[i]=0;
+        FEC2_3.always9byteOx00[i]=0;
+        FEC3_3.always9byteOx00[i]=0;
+        FEC4_3.always9byteOx00[i]=0;
+    }   
+
+//   for (i=0;i<128;i++){
+//        FEC1_1.signature[i]=Random(255);
+//        FEC3_1.signature[i]=Random(255);
+//        FEC4_1.signature[i]=Random(255);
+//        FEC1_2.signature[i]=Random(255);
+//        FEC3_2.signature[i]=Random(255);
+//        FEC4_2.signature[i]=Random(255);
+//        FEC1_3.signature[i]=Random(255);
+//        FEC3_3.signature[i]=Random(255);
+//       FEC4_3.signature[i]=Random(255);
+//    }
+//   for (i=0;i<64;i++){
+//        FEC2_1.signature[i]=Random(255);
+//        FEC2_2.signature[i]=Random(255);
+//        FEC2_3.signature[i]=Random(255);
+//        FEC2_1_sign2.x[i]=Random(255);
+//        FEC2_2_sign2.x[i]=Random(255);
+//        FEC2_3_sign2.x[i]=Random(255);
+//    }
+
+   for (i=0;i<128;i++){
+        FEC1_1.signature[i]=0xFF;
+        FEC3_1.signature[i]=0xFF;
+        FEC4_1.signature[i]=0xFF;
+        FEC1_2.signature[i]=0xFF;
+        FEC3_2.signature[i]=0xFF;
+        FEC4_2.signature[i]=0xFF;
+        FEC1_3.signature[i]=0xFF;
+        FEC3_3.signature[i]=0xFF;
+       FEC4_3.signature[i]=0xFF;
+    }
+   for (i=0;i<64;i++){
+        FEC2_1.signature[i]=0xFF;
+        FEC2_2.signature[i]=0xFF;
+        FEC2_3.signature[i]=0xFF;
+        FEC2_1_sign2.x[i]=0xFF;
+        FEC2_2_sign2.x[i]=0xFF;
+        FEC2_3_sign2.x[i]=0xFF;
+    }
+
+    FECstatus_epoch1_1.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch1_1.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch1_1.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch1_1.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch2_1.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch2_1.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch2_1.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch2_1.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch3_1.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch3_1.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch3_1.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch3_1.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch4_1.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch4_1.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch4_1.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch4_1.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch1_2.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch1_2.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch1_2.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch1_2.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch2_2.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch2_2.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch2_2.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch2_2.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch3_2.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch3_2.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch3_2.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch3_2.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch4_2.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch4_2.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch4_2.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch4_2.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch1_3.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch1_3.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch1_3.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch1_3.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch2_3.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch2_3.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch2_3.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch2_3.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch3_3.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch3_3.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch3_3.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch3_3.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+    FECstatus_epoch4_3.x[0]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),0,8));
+    FECstatus_epoch4_3.x[1]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),9,8));
+    FECstatus_epoch4_3.x[2]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),18,8));
+    FECstatus_epoch4_3.x[3]=BinaryStrToInt(SubStr(IntToBinaryStr(desiredDatetimeSinceEpoch),27,8));
+
+    FECstatus_val1_1.x[0]=0xFF; FECstatus_val1_1.x[1]=0x01;
+    FECstatus_val2_1.x[0]=0xFF; FECstatus_val2_1.x[1]=0x01;
+    FECstatus_val3_1.x[0]=0xFF; FECstatus_val3_1.x[1]=0x01;
+    FECstatus_val4_1.x[0]=0xFF; FECstatus_val4_1.x[1]=0x01;
+    FECstatus_val1_2.x[0]=0xFF; FECstatus_val1_2.x[1]=0x01;
+    FECstatus_val2_2.x[0]=0xFF; FECstatus_val2_2.x[1]=0x01;
+    FECstatus_val3_2.x[0]=0xFF; FECstatus_val3_2.x[1]=0x01;
+    FECstatus_val4_2.x[0]=0xFF; FECstatus_val4_2.x[1]=0x01;
+    FECstatus_val1_3.x[0]=0xFF; FECstatus_val1_3.x[1]=0x01;
+    FECstatus_val2_3.x[0]=0xFF; FECstatus_val2_3.x[1]=0x01;
+    FECstatus_val3_3.x[0]=0xFF; FECstatus_val3_3.x[1]=0x01;
+    FECstatus_val4_3.x[0]=0xFF; FECstatus_val4_3.x[1]=0x01;
+
+    FileSave( FileNameGetPath( GetFileName() ) + FileNameGetBase( GetFileName(), false ) + "_patched" + FileNameGetExtension( GetFileName() ) );
+    Printf("The new file is saved with the following name: %s\n", GetFileName());
+    Printf("After modifying the data, checksum correction is required!\n");
+}
+
+if ((Fec1_activated==0)&&(Fec2_activated==0)&&(Fec3_activated==0)&&(Fec4_activated==0))
+{
+    patch_everything();
+    readData();
+    Printf("Patch completed successfully. All functions are activated.\n");
+}
+else Printf("All functions are activated.\n");
+
+Printf("The program will continue with the checksum check.");
+//Sleep( 3000 );
+RunTemplate( "2nd_MEN2_checksum.bt", false );
+
+Printf("\n");
+//Printf("\n\nBefore checksum correction: \n");
+
+int check_checksum_by_block(uint blockID){ //this won't be edited bcz. it is working
+    checksumTemporal=Checksum(CHECKSUM_CRCCCITT, 0+(blockID*64), 64, 0x1021, 0);
+    actualBlockChecksum = ( ((uint16)Checksum.x[   (blockID*2)+1   ] << 8) | Checksum.x[blockID*2]);
+    //Printf("Checking bl%i e:%04X g:%04X ", blockID, checksumTemporal, actualBlockChecksum); //expected vs. got chksum
+    if (checksumTemporal == actualBlockChecksum) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+
+void check_for_checksum_errors(){
+    for (i = 0; i < 495; i++){
+        if (!check_checksum_by_block(i)){
+            checksumTemporal=Checksum(CHECKSUM_CRCCCITT, 0+(i*64), 64, 0x1021, 0);
+            actualBlockChecksum = ( ((uint16)Checksum.x[   (i*2)+1   ] << 8) | Checksum.x[i*2]);
+            Printf("Checksum error at: blk %i, expected:%04X got:%04X \n", i, checksumTemporal, actualBlockChecksum); //expected vs. got chksum
+            error=1;
+        }
+    }
+}
+check_for_checksum_errors();
+
+void correct_checksum(uint blockID){
+    char newchecksum[2]; //2 bytes of the new checksum
+    int checksumTemporal=Checksum(CHECKSUM_CRCCCITT, 0+(blockID*64), 64, 0x1021, 0);
+    (uint16)Checksum.x[   (blockID*2)   ]=checksumTemporal&0xFF;
+    (uint16)Checksum.x[   (blockID*2)+1  ]=checksumTemporal>>8;
+}
+
+void correct_all_checksum_errors(){
+    for (i = 0; i < 495; i++){
+        if (!check_checksum_by_block(i)){
+            correct_checksum(i);
+        }       
+    }
+}
+
+if (error == 1)
+{
+    correct_all_checksum_errors();
+    Printf("\nAll checksums corrected.\n");
+    FileSave( FileNameGetPath( GetFileName() ) + FileNameGetBase( GetFileName(), false ) + "_corrected" + FileNameGetExtension( GetFileName() ) );
+    Printf("The new file is saved with the following name: %s", GetFileName());
+}
+else
+    Printf("\nAll checksums are correct.\n");
+
+

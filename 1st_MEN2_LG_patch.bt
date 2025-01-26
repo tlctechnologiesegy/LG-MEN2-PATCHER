@@ -1,0 +1,403 @@
+if (FileSize() != 32768){
+    Exit(0);
+}        
+
+struct unused1_struct {
+   unsigned char x[256];
+}  unused1 <bgcolor=cDkGray>;
+
+struct fazit_struct {
+   unsigned char x[23];
+}  fazit <bgcolor=cRed>;
+
+struct unused1a_struct {
+   unsigned char x[4861];
+}  unused1a <bgcolor=cDkGray>;
+
+struct version_struct {
+   unsigned char x[20];
+}  version <bgcolor=cRed>;
+
+struct unused1b_struct {
+   unsigned char x[2072];
+}  unused1b <bgcolor=cDkGray>;
+
+struct FEC1_1_struct { //1C40h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC1_1 <bgcolor=cRed>;
+
+struct FEC2_1_struct { //1D00h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[64];
+}  FEC2_1 <bgcolor=cYellow>;
+
+struct unused2_struct {
+   unsigned char x[384];
+}  unused2 <bgcolor=cDkGray>;
+
+struct FEC2_1_sign2_struct {
+   unsigned char x[64];
+}  FEC2_1_sign2 <bgcolor=cYellow>;
+
+struct unused2a_struct {
+   unsigned char x[780];
+}  unused2a <bgcolor=cDkGray>;
+
+struct realVCRN_1_struct {
+   unsigned char x[5];
+}  realVCRN_1 <bgcolor=cLtGreen>;
+
+struct unused2b_struct {
+   unsigned char x[47];
+}  unused2b <bgcolor=cDkGray>;
+
+struct FECstatus1_1_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill1_1 <bgcolor=cBlue>;
+
+struct FECstatus1_1_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch1_1 <bgcolor=cYellow>;
+
+struct FECstatus1_1_val_struct {
+   unsigned char x[2];
+}  FECstatus_val1_1 <bgcolor=cLtGreen>;
+
+struct FECstatus2_1_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill2_1 <bgcolor=cBlue>;
+
+struct FECstatus2_1_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch2_1 <bgcolor=cYellow>;
+
+struct FECstatus2_1_val_struct {
+   unsigned char x[2];
+}  FECstatus_val2_1 <bgcolor=cLtGreen>;
+
+struct FECstatus3_1_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill3_1 <bgcolor=cBlue>;
+
+struct FECstatus3_1_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch3_1 <bgcolor=cYellow>;
+
+struct FECstatus3_1_val_struct {
+   unsigned char x[2];
+}  FECstatus_val3_1 <bgcolor=cLtGreen>;
+
+struct FECstatus4_1_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill4_1 <bgcolor=cBlue>;
+
+struct FECstatus4_1_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch4_1 <bgcolor=cYellow>;
+
+struct FECstatus4_1_val_struct {
+   unsigned char x[2];
+}  FECstatus_val4_1 <bgcolor=cLtGreen>;
+
+struct FEC3_1_struct { //22C0h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC3_1 <bgcolor=cRed>;
+
+struct FEC4_1_struct { //2380h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC4_1 <bgcolor=cYellow>;
+
+struct unused3_struct {
+   unsigned char x[8512];
+}  unused3 <bgcolor=cDkGray>;
+
+struct FEC1_2_struct { //4580h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC1_2 <bgcolor=cRed>;
+
+struct FEC2_2_struct { //4640h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[64];
+}  FEC2_2 <bgcolor=cYellow>;
+
+struct unused4_struct {
+   unsigned char x[384];
+}  unused4 <bgcolor=cDkGray>;
+
+struct FEC2_2_sign2_struct {
+   unsigned char x[64];
+}  FEC2_2_sign2 <bgcolor=cYellow>;
+
+struct unused4a_struct {
+   unsigned char x[780];
+}  unused4a <bgcolor=cDkGray>;
+
+struct realVCRN_2_struct {
+   unsigned char x[5];
+}  realVCRN_2 <bgcolor=cLtGreen>;
+
+struct unused4b_struct {
+   unsigned char x[47];
+}  unused4b <bgcolor=cDkGray>;
+
+struct FECstatus1_2_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill1_2 <bgcolor=cBlue>;
+
+struct FECstatus1_2_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch1_2 <bgcolor=cYellow>;
+
+struct FECstatus1_2_val_struct {
+   unsigned char x[2];
+}  FECstatus_val1_2 <bgcolor=cLtGreen>;
+
+struct FECstatus2_2_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill2_2 <bgcolor=cBlue>;
+
+struct FECstatus2_2_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch2_2 <bgcolor=cYellow>;
+
+struct FECstatus2_2_val_struct {
+   unsigned char x[2];
+}  FECstatus_val2_2 <bgcolor=cLtGreen>;
+
+struct FECstatus3_2_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill3_2 <bgcolor=cBlue>;
+
+struct FECstatus3_2_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch3_2 <bgcolor=cYellow>;
+
+struct FECstatus3_2_val_struct {
+   unsigned char x[2];
+}  FECstatus_val3_2 <bgcolor=cLtGreen>;
+
+struct FECstatus4_2_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill4_2 <bgcolor=cBlue>;
+
+struct FECstatus4_2_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch4_2 <bgcolor=cYellow>;
+
+struct FECstatus4_2_val_struct {
+   unsigned char x[2];
+}  FECstatus_val4_2 <bgcolor=cLtGreen>;
+
+struct FEC3_2_struct { //4C00h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC3_2 <bgcolor=cRed>;
+
+struct FEC4_2_struct { //4CC0h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC4_2 <bgcolor=cYellow>;
+
+struct unused5_struct {
+   unsigned char x[8512];
+}  unused5 <bgcolor=cDkGray>;
+
+struct FEC1_3_struct { //6EC0h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC1_3 <bgcolor=cRed>;
+
+struct FEC2_3_struct { //6F80h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[64];
+}  FEC2_3 <bgcolor=cYellow>;
+
+struct unused6_struct {
+   unsigned char x[384];
+}  unused6 <bgcolor=cDkGray>;
+
+struct FEC2_3_sign2_struct {
+   unsigned char x[64];
+}  FEC2_3_sign2 <bgcolor=cYellow>;
+
+struct unused6a_struct {
+   unsigned char x[780];
+}  unused6a <bgcolor=cDkGray>;
+
+struct realVCRN_3_struct {
+   unsigned char x[5];
+}  realVCRN_3 <bgcolor=cLtGreen>;
+
+struct unused6b_struct {
+   unsigned char x[47];
+}  unused6b <bgcolor=cDkGray>;
+
+struct FECstatus1_3_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill1_3 <bgcolor=cBlue>;
+
+struct FECstatus1_3_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch1_3 <bgcolor=cYellow>;
+
+struct FECstatus1_3_val_struct {
+   unsigned char x[2];
+}  FECstatus_val1_3 <bgcolor=cLtGreen>;
+
+struct FECstatus2_3_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill2_3 <bgcolor=cBlue>;
+
+struct FECstatus2_3_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch2_3 <bgcolor=cYellow>;
+
+struct FECstatus2_3_val_struct {
+   unsigned char x[2];
+}  FECstatus_val2_3 <bgcolor=cLtGreen>;
+
+struct FECstatus3_3_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill3_3 <bgcolor=cBlue>;
+
+struct FECstatus3_3_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch3_3 <bgcolor=cYellow>;
+
+struct FECstatus3_3_val_struct {
+   unsigned char x[2];
+}  FECstatus_val3_3 <bgcolor=cLtGreen>;
+
+struct FECstatus4_3_fill_struct {
+   unsigned char x[10];
+}  FECstatus_fill4_3 <bgcolor=cBlue>;
+
+struct FECstatus4_3_epoch_struct {
+   unsigned char x[4];
+}  FECstatus_epoch4_3 <bgcolor=cYellow>;
+
+struct FECstatus4_3_val_struct {
+   unsigned char x[2];
+}  FECstatus_val4_3 <bgcolor=cLtGreen>;
+
+struct FEC3_3_struct { //7540h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC3_3 <bgcolor=cRed>;
+
+struct FEC4_3_struct { //7600h
+   unsigned char magic_bytes[2];
+   unsigned char FEC[4];
+   unsigned char always03;
+   unsigned char VCRN[5];
+   unsigned char VIN[17];
+   unsigned char always00;
+   unsigned char epoch[4];
+   unsigned char always9byteOx00[9];
+   unsigned char always9byteOxff[21];
+   unsigned char signature[128];
+}  FEC4_3 <bgcolor=cYellow>;
+
+struct unused7_struct {
+   unsigned char x[1280];
+}  unused7 <bgcolor=cDkGray>;
+
+struct nochk_struct {
+   unsigned char x[64];
+}  nochk <bgcolor=cWhite>;
+
+struct checksum_struct {
+   unsigned char x[1024];
+}  checksum <bgcolor=cBlue>;
