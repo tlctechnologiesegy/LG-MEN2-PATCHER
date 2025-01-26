@@ -2,6 +2,10 @@ import struct
 import datetime
 import os
 import binascii
+import platform
+import psutil
+import socket
+import subprocess
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 # Add Windows-specific imports
@@ -245,9 +249,21 @@ class MEN2PatcherGUI(QtWidgets.QMainWindow):
                 <li>Supporting the automotive industry with specialized tools</li>
                 <li>Maintaining high standards of quality and security</li>
             </ul>
-            <p><small>© 2024 TLC Technologies RGY. All rights reserved.</small></p>
+            <p><small>© 2025-2026 TLC Technologies EGY. All rights reserved.</small></p>
         """)
         legal_layout.addWidget(legal_text)
+
+        # Add Hardware Info Frame after Company Info
+        hardware_frame = QtWidgets.QGroupBox("System Information")
+        hardware_layout = QtWidgets.QVBoxLayout(hardware_frame)
+        help_container_layout.addWidget(hardware_frame)
+
+        # Create hardware info text widget
+        hardware_text = QtWidgets.QTextEdit()
+        hardware_text.setReadOnly(True)
+        hardware_text.setMinimumHeight(200)
+        hardware_text.setHtml(self.get_system_info())
+        hardware_layout.addWidget(hardware_text)
 
         # Add spacer at bottom
         help_container_layout.addStretch()
@@ -658,6 +674,150 @@ class MEN2PatcherGUI(QtWidgets.QMainWindow):
         phone = "201097711177"  # Remove + and format number
         url = f"https://wa.me/{phone}"
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
+
+    def get_system_info(self):
+        try:
+            # CPU Info
+            cpu_info = f"CPU: {platform.processor()}"
+            cpu_cores = f"CPU Cores: {psutil.cpu_count()} (Physical: {psutil.cpu_count(logical=False)})"
+            
+            # Memory Info
+            ram = psutil.virtual_memory()
+            ram_total = f"RAM: {self.format_bytes(ram.total)}"
+            ram_available = f"RAM Available: {self.format_bytes(ram.available)}"
+            
+            # Disk Info
+            disk = psutil.disk_usage('/')
+            disk_total = f"Disk Total: {self.format_bytes(disk.total)}"
+            disk_free = f"Disk Free: {self.format_bytes(disk.free)}"
+            
+            # Network Info
+            hostname = socket.gethostname()
+            
+            # Get all network interfaces
+            def get_ip_addresses():
+                ip_list = []
+                interfaces = psutil.net_if_addrs()
+                for interface, addrs in interfaces.items():
+                    if interface != 'lo':  # Skip loopback
+                        for addr in addrs:
+                            if addr.family == socket.AF_INET:  # IPv4
+                                ip_list.append(f"{interface}: {addr.address}")
+                return ip_list or ["No network interfaces found"]
+
+            local_ips = get_ip_addresses()
+            
+            # Get WAN IP more reliably
+            def get_wan_ip():
+                try:
+                    # Try multiple services
+                    services = [
+                        'https://api.ipify.org',
+                        'https://ifconfig.me/ip',
+                        'https://api.myip.com'
+                    ]
+                    for service in services:
+                        response = subprocess.check_output(['curl', '-s', service], timeout=3)
+                        if response:
+                            return response.decode().strip()
+                except:
+                    try:
+                        # Fallback to DNS method
+                        import socket
+                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        s.connect(("8.8.8.8", 80))
+                        return s.getsockname()[0]
+                    except:
+                        return "Unable to determine"
+                return "Unable to determine"
+
+            wan_ip = get_wan_ip()
+                
+            # Get DNS servers more accurately
+            def get_dns_servers():
+                dns_list = []
+                try:
+                    if os.name == 'nt':  # Windows
+                        output = subprocess.check_output('ipconfig /all').decode()
+                        for line in output.split('\n'):
+                            if 'DNS Servers' in line:
+                                dns = line.split(':')[-1].strip()
+                                if dns and not dns.startswith('127.'):
+                                    dns_list.append(dns)
+                    else:  # Linux/Unix
+                        with open('/etc/resolv.conf', 'r') as f:
+                            for line in f:
+                                if 'nameserver' in line:
+                                    dns = line.split()[1]
+                                    if not dns.startswith('127.'):
+                                        dns_list.append(dns)
+                        
+                        # Try systemd-resolve as fallback
+                        if not dns_list:
+                            try:
+                                output = subprocess.check_output(['systemd-resolve', '--status']).decode()
+                                for line in output.split('\n'):
+                                    if 'DNS Servers:' in line:
+                                        dns = line.split(':')[-1].strip()
+                                        if dns and not dns.startswith('127.'):
+                                            dns_list.append(dns)
+                            except:
+                                pass
+                except:
+                    pass
+                
+                return dns_list or ["8.8.8.8 (Google)", "1.1.1.1 (Cloudflare)"]
+
+            dns_servers = get_dns_servers()
+            dns_info = ', '.join(dns_servers)
+            
+            # Add to HTML output
+            network_info = f"""
+            <h3>Network Information</h3>
+            <p><b>Hostname:</b> {hostname}</p>
+            <p><b>Local IPs:</b></p>
+            <ul>
+                {''.join(f'<li>{ip}</li>' for ip in local_ips)}
+            </ul>
+            <p><b>WAN IP:</b> {wan_ip}</p>
+            <p><b>DNS Servers:</b> {dns_info}</p>
+            """
+
+            # System Info
+            system_info = f"OS: {platform.system()} {platform.release()}"
+            machine_type = "Laptop" if self.is_laptop() else "Desktop"
+            
+            # Combine all information
+            return f"""
+            <h3>Hardware Information</h3>
+            <p><b>{system_info}</b></p>
+            <p><b>Machine Type:</b> {machine_type}</p>
+            <p><b>{cpu_info}</b></p>
+            <p>{cpu_cores}</p>
+            <p>{ram_total}</p>
+            <p>{ram_available}</p>
+            <p>{disk_total}</p>
+            <p>{disk_free}</p>
+            {network_info}
+            """
+
+        except Exception as e:
+            return f"<p>Error getting system information: {str(e)}</p>"
+
+    def format_bytes(self, bytes):
+        """Convert bytes to human readable format"""
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if bytes < 1024:
+                return f"{bytes:.2f} {unit}"
+            bytes /= 1024
+
+    def is_laptop(self):
+        """Detect if system is a laptop"""
+        try:
+            # Check for battery
+            return len(list(psutil.sensors_battery() or [])) > 0
+        except:
+            return False
 
 if __name__ == "__main__":
     import sys
