@@ -160,6 +160,98 @@ class MEN2PatcherGUI(QtWidgets.QMainWindow):
         self.differences_table.horizontalHeader().setStretchLastSection(True)
         compare_layout.addWidget(self.differences_table)
 
+        # Add Help tab
+        help_tab = QtWidgets.QWidget()
+        self.notebook.addTab(help_tab, "Help")
+        help_layout = QtWidgets.QVBoxLayout(help_tab)
+
+        # Create scrollable area for help content
+        scroll_area = QtWidgets.QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        help_layout.addWidget(scroll_area)
+
+        # Container for all help content
+        help_container = QtWidgets.QWidget()
+        scroll_area.setWidget(help_container)
+        help_container_layout = QtWidgets.QVBoxLayout(help_container)
+        help_container_layout.setAlignment(QtCore.Qt.AlignHCenter)
+
+        # Add logo
+        logo_label = QtWidgets.QLabel()
+        logo_path = os.path.join(os.path.dirname(__file__), 'logo.jpeg')
+        if os.path.exists(logo_path):
+            pixmap = QtGui.QPixmap(logo_path)
+            scaled_pixmap = pixmap.scaled(400, 300, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+            logo_label.setPixmap(scaled_pixmap)
+            logo_label.setAlignment(QtCore.Qt.AlignCenter)
+        help_container_layout.addWidget(logo_label)
+
+        # Company Info Frame
+        company_frame = QtWidgets.QGroupBox("Company Information")
+        company_layout = QtWidgets.QVBoxLayout(company_frame)
+        help_container_layout.addWidget(company_frame)
+
+        company_info = [
+            "<b>Company:</b> TLC Technologies RGY",
+            "<b>Website:</b> <a href='http://tlctechnologiewgy.com'>tlctechnologiewgy.com</a>",
+            "<b>Email:</b> <a href='mailto:support@tlctechnologiesegy@gmail.com'>support@tlctechnologiesegy@gmail.com</a>"
+        ]
+
+        for info in company_info:
+            label = QtWidgets.QLabel(info)
+            label.setOpenExternalLinks(True)
+            label.setTextFormat(QtCore.Qt.RichText)
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            company_layout.addWidget(label)
+
+        # Add WhatsApp button
+        whatsapp_button = QtWidgets.QPushButton("Contact via WhatsApp")
+        whatsapp_button.clicked.connect(self.open_whatsapp)
+        whatsapp_button.setStyleSheet("""
+            QPushButton {
+                background-color: #25D366;
+                color: white;
+                padding: 8px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #128C7E;
+            }
+        """)
+        company_layout.addWidget(whatsapp_button)
+
+        # Legal Frame
+        legal_frame = QtWidgets.QGroupBox("Legal Information")
+        legal_layout = QtWidgets.QVBoxLayout(legal_frame)
+        help_container_layout.addWidget(legal_frame)
+
+        legal_text = QtWidgets.QTextEdit()
+        legal_text.setReadOnly(True)
+        legal_text.setMinimumHeight(200)
+        legal_text.setHtml("""
+            <h3>Egyptian Intellectual Property Law</h3>
+            <p>According to Egyptian Law No. 82 of 2002 (Intellectual Property Rights Law):</p>
+            <ul>
+                <li>Software piracy and unauthorized modification of software is prohibited</li>
+                <li>Violations may result in imprisonment and/or fines</li>
+                <li>Commercial software requires proper licensing</li>
+            </ul>
+            <h3>Company Goals</h3>
+            <ul>
+                <li>Providing innovative solutions in embedded systems</li>
+                <li>Developing reliable automotive software tools</li>
+                <li>Supporting the automotive industry with specialized tools</li>
+                <li>Maintaining high standards of quality and security</li>
+            </ul>
+            <p><small>© 2024 TLC Technologies RGY. All rights reserved.</small></p>
+        """)
+        legal_layout.addWidget(legal_text)
+
+        # Add spacer at bottom
+        help_container_layout.addStretch()
+
     def log(self, message):
         self.log_text.appendPlainText(message)
 
@@ -560,6 +652,12 @@ class MEN2PatcherGUI(QtWidgets.QMainWindow):
             self.differences_table.setItem(row, 0, offset_item)
             self.differences_table.setItem(row, 1, original_item)
             self.differences_table.setItem(row, 2, patched_item)
+
+    def open_whatsapp(self):
+        """Open WhatsApp chat link in default browser"""
+        phone = "201097711177"  # Remove + and format number
+        url = f"https://wa.me/{phone}"
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
 
 if __name__ == "__main__":
     import sys
