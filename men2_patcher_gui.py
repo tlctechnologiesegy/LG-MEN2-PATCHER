@@ -25,8 +25,16 @@ class MEN2PatcherGUI:
         self.create_gui()
         
     def create_gui(self):
+        # Notebook for tabs
+        self.notebook = ttk.Notebook(self.window)
+        self.notebook.pack(fill="both", expand=True)
+        
+        # Main tab
+        main_frame = ttk.Frame(self.notebook)
+        self.notebook.add(main_frame, text="Main")
+        
         # File selection frame
-        file_frame = ttk.LabelFrame(self.window, text="File Selection", padding=10)
+        file_frame = ttk.LabelFrame(main_frame, text="File Selection", padding=10)
         file_frame.pack(fill="x", padx=10, pady=5)
         
         ttk.Label(file_frame, text="EEPROM File:").pack(side="left")
@@ -34,29 +42,30 @@ class MEN2PatcherGUI:
         ttk.Button(file_frame, text="Browse", command=self.browse_file).pack(side="left")
         
         # VIN frame
-        vin_frame = ttk.LabelFrame(self.window, text="Vehicle Information", padding=10)
+        vin_frame = ttk.LabelFrame(main_frame, text="Vehicle Information", padding=10)
         vin_frame.pack(fill="x", padx=10, pady=5)
         
         ttk.Label(vin_frame, text="VIN:").pack(side="left")
         ttk.Entry(vin_frame, textvariable=self.vin_number, width=20).pack(side="left", padx=5)
         
         # Features frame
-        features_frame = ttk.LabelFrame(self.window, text="Features Status", padding=10)
+        features_frame = ttk.LabelFrame(main_frame, text="Features Status", padding=10)
         features_frame.pack(fill="x", padx=10, pady=5)
         
         for feature, var in self.features_status.items():
             ttk.Checkbutton(features_frame, text=feature, variable=var, state="disabled").pack(side="left", padx=10)
         
         # Action buttons
-        btn_frame = ttk.Frame(self.window, padding=10)
+        btn_frame = ttk.Frame(main_frame, padding=10)
         btn_frame.pack(fill="x", padx=10, pady=5)
         
         ttk.Button(btn_frame, text="Read File", command=self.read_file).pack(side="left", padx=5)
         ttk.Button(btn_frame, text="Patch File", command=self.patch_file).pack(side="left", padx=5)
-        ttk.Button(btn_frame, text="Verify Checksum", command=self.verify_checksum).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Verify Checksum", command=self.verify_and_correct_checksums).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Clear Log", command=self.clear_log).pack(side="left", padx=5)
         
         # Progress frame
-        progress_frame = ttk.LabelFrame(self.window, text="Progress", padding=10)
+        progress_frame = ttk.LabelFrame(main_frame, text="Progress", padding=10)
         progress_frame.pack(fill="x", padx=10, pady=5)
         
         self.progress = ttk.Progressbar(progress_frame, mode="determinate")
@@ -65,14 +74,14 @@ class MEN2PatcherGUI:
         ttk.Label(progress_frame, textvariable=self.status_text).pack()
         
         # Log frame
-        log_frame = ttk.LabelFrame(self.window, text="Operation Log", padding=10)
+        log_frame = ttk.LabelFrame(main_frame, text="Operation Log", padding=10)
         log_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         self.log_text = tk.Text(log_frame, height=10)
         self.log_text.pack(fill="both", expand=True)
         
         # Comparison viewer frame
-        compare_frame = ttk.LabelFrame(self.window, text="File Comparison", padding=10)
+        compare_frame = ttk.LabelFrame(main_frame, text="File Comparison", padding=10)
         compare_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Split into two columns
@@ -89,11 +98,33 @@ class MEN2PatcherGUI:
         ttk.Label(right_frame, text="Patched").pack()
         self.patched_text = tk.Text(right_frame, height=10, width=40)
         self.patched_text.pack(fill="both", expand=True)
+        
+        # Diff tab
+        diff_frame = ttk.Frame(self.notebook)
+        self.notebook.add(diff_frame, text="Diff")
+        
+        # Split into two columns for diff
+        left_diff_frame = ttk.Frame(diff_frame)
+        left_diff_frame.pack(side="left", fill="both", expand=True)
+        
+        right_diff_frame = ttk.Frame(diff_frame)
+        right_diff_frame.pack(side="right", fill="both", expand=True)
+        
+        ttk.Label(left_diff_frame, text="Original").pack()
+        self.original_diff_text = tk.Text(left_diff_frame, height=10, width=40)
+        self.original_diff_text.pack(fill="both", expand=True)
+        
+        ttk.Label(right_diff_frame, text="Patched/Corrected").pack()
+        self.patched_diff_text = tk.Text(right_diff_frame, height=10, width=40)
+        self.patched_diff_text.pack(fill="both", expand=True)
 
     def log(self, message):
         self.log_text.insert("end", f"{message}\n")
         self.log_text.see("end")
         self.window.update()
+
+    def clear_log(self):
+        self.log_text.delete("1.0", "end")
 
     def browse_file(self):
         filename = filedialog.askopenfilename(
@@ -207,24 +238,17 @@ class MEN2PatcherGUI:
             # Show comparison
             self.show_hex_dump(data, patched=True)
             
-            # Verify checksums
-            self.verify_checksum()
+            # Verify checksums and correct them automatically
+            self.verify_and_correct_checksums(data, output_file)
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to patch file: {str(e)}")
             self.log(f"Error: {str(e)}")
 
-    def verify_checksum(self):
-        if not self.current_file.get():
-            messagebox.showerror("Error", "Please select a file first")
-            return
-            
+    def verify_and_correct_checksums(self, data, output_file):
         try:
-            with open(self.current_file.get(), 'rb') as f:
-                data = f.read()
-                
             self.progress["value"] = 0
-            self.status_text.set("Verifying checksums...")
+            self.status_text.set("Verifying and correcting checksums...")
             
             # CRC-CCITT checking logic here
             # For each 64-byte block...
@@ -245,22 +269,22 @@ class MEN2PatcherGUI:
                     self.log(f"Checksum error in block {block}")
                     
             if errors:
-                self.status_text.set(f"Found {len(errors)} checksum errors")
-                if messagebox.askyesno("Checksum Errors", "Would you like to correct the checksums?"):
-                    self.correct_checksums(data, errors)
+                self.correct_checksums(data, errors)
+                self.log("All checksums corrected.")
+                corrected_output_file = output_file.replace('_patched.bin', '_corrected.bin')
+                with open(corrected_output_file, 'wb') as f:
+                    f.write(data)
+                self.log(f"Saved corrected file: {corrected_output_file}")
+                self.show_diff(data)
             else:
                 self.status_text.set("All checksums verified successfully")
                 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to verify checksums: {str(e)}")
+            messagebox.showerror("Error", f"Failed to verify and correct checksums: {str(e)}")
             self.log(f"Error: {str(e)}")
 
     def correct_checksums(self, data, error_blocks):
         try:
-            data = bytearray(data)
-            self.progress["value"] = 0
-            self.status_text.set("Correcting checksums...")
-            
             for i, block in enumerate(error_blocks):
                 self.progress["value"] = (i / len(error_blocks)) * 100
                 
@@ -270,13 +294,8 @@ class MEN2PatcherGUI:
                 # Store new checksum
                 data[32768-1024+(block*2):32768-1024+(block*2)+2] = new_crc.to_bytes(2, 'big')
                 
-            output_file = self.current_file.get().replace('.bin', '_corrected.bin')
-            with open(output_file, 'wb') as f:
-                f.write(data)
-                
             self.progress["value"] = 100
             self.status_text.set("Checksums corrected successfully")
-            self.log(f"Saved corrected file: {output_file}")
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to correct checksums: {str(e)}")
@@ -299,6 +318,55 @@ class MEN2PatcherGUI:
         else:
             self.original_text.delete("1.0", "end")
             self.original_text.insert("1.0", dump_text)
+
+    def show_diff(self, patched_data):
+        try:
+            with open(self.current_file.get(), 'rb') as f:
+                original_data = f.read()
+                
+            original_hex_dump = []
+            patched_hex_dump = []
+            
+            for i in range(0, len(original_data), 16):
+                original_chunk = original_data[i:i+16]
+                patched_chunk = patched_data[i:i+16]
+                
+                original_hex_line = f"{i:08x}  {' '.join([f'{b:02x}' for b in original_chunk]):<48}  "
+                patched_hex_line = f"{i:08x}  {' '.join([f'{b:02x}' for b in patched_chunk]):<48}  "
+                
+                original_ascii_line = ''.join([chr(b) if 32 <= b <= 126 else '.' for b in original_chunk])
+                patched_ascii_line = ''.join([chr(b) if 32 <= b <= 126 else '.' for b in patched_chunk])
+                
+                original_hex_dump.append(f"{original_hex_line}{original_ascii_line}")
+                patched_hex_dump.append(f"{patched_hex_line}{patched_ascii_line}")
+                
+            original_dump_text = '\n'.join(original_hex_dump)
+            patched_dump_text = '\n'.join(patched_hex_dump)
+            
+            self.original_diff_text.delete("1.0", "end")
+            self.original_diff_text.insert("1.0", original_dump_text)
+            
+            self.patched_diff_text.delete("1.0", "end")
+            self.patched_diff_text.insert("1.0", patched_dump_text)
+            
+            # Highlight changes in the diff tab
+            self.highlight_changes(original_data, patched_data)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to show diff: {str(e)}")
+            self.log(f"Error: {str(e)}")
+
+    def highlight_changes(self, original_data, patched_data):
+        for i in range(0, len(original_data), 16):
+            original_chunk = original_data[i:i+16]
+            patched_chunk = patched_data[i:i+16]
+            
+            for j in range(len(original_chunk)):
+                if original_chunk[j] != patched_chunk[j]:
+                    start_index = f"{i//16 + 1}.{j*3}"
+                    end_index = f"{i//16 + 1}.{j*3 + 2}"
+                    self.patched_diff_text.tag_add("highlight", start_index, end_index)
+                    self.patched_diff_text.tag_config("highlight", background="green")
 
 if __name__ == "__main__":
     app = MEN2PatcherGUI()
